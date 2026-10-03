@@ -1,13 +1,5 @@
 package main
 
-import (
-	"crypto/md5"
-	"fmt"
-	"io"
-	"os"
-	"sync"
-)
-
 func main() {
 	files := []string{
 		"file1.txt",
@@ -22,13 +14,10 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	// Пул из 3 воркеров
 	for w := 1; w <= 3; w++ {
 		wg.Add(1)
-
 		go func() {
 			defer wg.Done()
-
 			for file := range jobs {
 				f, err := os.Open(file)
 				if err != nil {
