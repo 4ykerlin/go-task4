@@ -1,10 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"time"
-)
-
 func main() {
 	tick := time.Tick(200 * time.Millisecond)
 
