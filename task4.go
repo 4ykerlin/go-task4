@@ -1,11 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"net/http"
-	"sync"
-)
-
 func main() {
 	urls := []string{
 		"https://example.com",
@@ -20,20 +14,16 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	// Пул из 3 горутин
 	for w := 1; w <= 3; w++ {
 		wg.Add(1)
-
 		go func() {
 			defer wg.Done()
-
 			for url := range jobs {
 				resp, err := http.Get(url)
 				if err != nil {
 					results <- url + " ошибка: " + err.Error()
 					continue
 				}
-
 				results <- url + " -> " + resp.Status
 				resp.Body.Close()
 			}
