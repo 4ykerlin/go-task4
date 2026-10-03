@@ -1,46 +1,32 @@
 package main
 
-import "fmt"
-
-type SetCommand struct {
-	key   string
-	value int
-	done  chan bool
-}
-
-type GetCommand struct {
-	key   string
-	reply chan int
-}
-
-func manager(setCh chan SetCommand, getCh chan GetCommand) {
-	state := make(map[string]int)
-
-	for {
-		select {
-		case cmd := <-setCh:
-			state[cmd.key] = cmd.value
-			cmd.done <- true
-
-		case cmd := <-getCh:
-			cmd.reply <- state[cmd.key]
-		}
-	}
-}
-
 func main() {
-	setCh := make(chan SetCommand)
-	getCh := make(chan GetCommand)
+	backends := []string{"backend1", "backend2", "backend3"}
 
-	go manager(setCh, getCh)
+	backendChans := make([]chan string, len(backends))
+	for i := range backends {
+		backendChans[i] = make(chan string)
+		go func(name string, ch chan string) {
+			for req := range ch {
+				fmt.Println(name, "обработал", req)
+			}
+		}(backends[i], backendChans[i])
+	}
 
-	// Установить значение
-	done := make(chan bool)
-	setCh <- SetCommand{key: "counter", value: 10, done: done}
-	<-done
+	requests := make(chan string)
 
-	// Получить значение
-	reply := make(chan int)
-	getCh <- GetCommand{key: "counter", reply: reply}
-	fmt.Println("counter =", <-reply)
+	go func() {
+		i := 0
+		for req := range requests {
+			backendChans[i] <- req
+			i = (i + 1) % len(backends)
+		}
+	}()
+
+	for j := 1; j <= 10; j++ {
+		requests <- fmt.Sprintf("запрос-%d", j)
+	}
+	close(requests)
+
+	time.Sleep(500 * time.Millisecond)
 }
